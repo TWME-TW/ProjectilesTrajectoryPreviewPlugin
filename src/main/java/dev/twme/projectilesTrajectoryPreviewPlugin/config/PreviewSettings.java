@@ -35,7 +35,7 @@ public final class PreviewSettings {
 
     private PreviewSettings(FileConfiguration config) {
         this.enabled = config.getBoolean("enabled", true);
-        this.enableOffhand = config.getBoolean("enable-offhand", false);
+        this.enableOffhand = config.getBoolean("enable-offhand", true);
         this.showTrajectory = DisplayMode.from(config.get("show-trajectory", "enabled"), DisplayMode.ENABLED);
         this.showOutline = DisplayMode.from(config.get("show-outline", "enabled"), DisplayMode.ENABLED);
         this.showHighlight = DisplayMode.from(config.get("show-highlight", "enabled"), DisplayMode.ENABLED);

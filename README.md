@@ -67,7 +67,7 @@ Default config:
 
 ```yaml
 enabled: true
-enable-offhand: false
+enable-offhand: true
 show-trajectory: enabled
 show-outline: enabled
 show-highlight: enabled
