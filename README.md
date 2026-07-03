@@ -4,6 +4,14 @@ Paper plugin port of [ProjectilesTrajectoryPreview](https://github.com/maDU59/Pr
 
 This plugin uses packet-only TextDisplay entities for rendering. Trajectory updates are driven by PacketEvents player movement/look packets, so preview motion is not limited to Bukkit's normal 20 TPS scheduler cadence.
 
+## Demo
+
+<!-- markdownlint-disable MD033 -->
+<video src="video.mp4" controls width="720"></video>
+<!-- markdownlint-enable MD033 -->
+
+[Watch the demo video](video.mp4)
+
 ## Features
 
 - Server-side projectile trajectory preview for common vanilla projectiles.
