@@ -1,0 +1,8 @@
+name: ProjectilesTrajectoryPreviewPlugin
+version: '${version}'
+
+main: dev.twme.projectilesTrajectoryPreviewPlugin.ProjectilesTrajectoryPreviewPlugin
+api-version: '1.21.11'
+load: POSTWORLD
+
+authors: [ TWME-TW ]
