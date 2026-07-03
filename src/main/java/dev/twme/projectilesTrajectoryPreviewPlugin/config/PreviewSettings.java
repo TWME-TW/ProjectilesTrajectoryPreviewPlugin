@@ -47,7 +47,7 @@ public final class PreviewSettings {
         this.fallbackUpdateTicks = Math.max(0L, config.getLong("fallback-update-ticks", 0L));
         this.lineThickness = Math.max(0.001f, (float) config.getDouble("line-thickness", 0.025));
         this.lineRenderMode = LineRenderMode.from(config.getString("line-render-mode", null), config.getBoolean("double-sided-lines", false));
-        this.transformationInterpolationTicks = Math.max(0, config.getInt("transformation-interpolation-ticks", 0));
+        this.transformationInterpolationTicks = Math.max(0, config.getInt("transformation-interpolation-ticks", 1));
         this.lineEntityBudget = Math.max(64, config.getInt("line-entity-budget", 128));
         this.lineCount = Math.max(8, config.getInt("line-count", 48));
         this.trajectoryStyle = TrajectoryStyle.from(config.getString("trajectory-style", "solid"));
