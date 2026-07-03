@@ -41,13 +41,18 @@ final class TextDisplayLinePool implements AutoCloseable {
     }
 
     void update(int index, Vector start, Vector end, int argbColor) {
+        update(index, start, end, argbColor, false);
+    }
+
+    void update(int index, Vector start, Vector end, int argbColor, boolean offhand) {
         ensureOrigin();
         LineShape shape = lines.get(index);
-        for (int rollIndex = 0; rollIndex < renderMode.rolls().length; rollIndex++) {
-            float roll = renderMode.rolls()[rollIndex];
+        float[] rolls = renderMode.rolls(offhand);
+        for (int rollIndex = 0; rollIndex < rolls.length; rollIndex++) {
+            float roll = rolls[rollIndex];
             LinePair pair = shape.pairs().get(rollIndex);
-            apply(pair.front(), lineMatrix(start, end, roll), argbColor, 2);
-            if (pair.back() != null) apply(pair.back(), lineMatrix(end, start, -roll), argbColor, 2);
+            apply(pair.front(), lineMatrix(start, end, roll), argbColor, 0);
+            if (pair.back() != null) apply(pair.back(), lineMatrix(end, start, -roll), argbColor, 0);
         }
     }
 
@@ -94,7 +99,7 @@ final class TextDisplayLinePool implements AutoCloseable {
         }
         if (line.getEntityMeta() instanceof AbstractDisplayMeta meta) {
             meta.setScale(new Vector3f(0.0001f, 0.0001f, 0.0001f));
-            meta.setTransformationInterpolationDuration(2);
+            meta.setTransformationInterpolationDuration(0);
             line.sendPacketToViewers(line.getEntityMeta().createPacket());
         }
     }

@@ -22,7 +22,6 @@ final class TextDisplaySurfacePool implements AutoCloseable {
     private static final float VIEW_RANGE = 100.0f;
 
     private final Player viewer;
-    private final boolean doubleSided;
     private final List<SurfacePair> surfaces;
     private Location origin;
 
@@ -32,7 +31,6 @@ final class TextDisplaySurfacePool implements AutoCloseable {
 
     TextDisplaySurfacePool(Player viewer, int size, boolean doubleSided) {
         this.viewer = viewer;
-        this.doubleSided = doubleSided;
         this.origin = normalizedOrigin(viewer.getLocation());
         this.surfaces = new ArrayList<>(size);
 
@@ -44,8 +42,8 @@ final class TextDisplaySurfacePool implements AutoCloseable {
     void update(int index, Vector corner, Vector widthEnd, Vector heightEnd, int argbColor) {
         ensureOrigin();
         SurfacePair surface = surfaces.get(index);
-        apply(surface.front(), surfaceMatrix(corner, widthEnd, heightEnd), argbColor, 2);
-        if (surface.back() != null) apply(surface.back(), surfaceMatrix(corner, heightEnd, widthEnd), argbColor, 2);
+        apply(surface.front(), surfaceMatrix(corner, widthEnd, heightEnd), argbColor, 0);
+        if (surface.back() != null) apply(surface.back(), surfaceMatrix(corner, heightEnd, widthEnd), argbColor, 0);
     }
 
     private Matrix4f surfaceMatrix(Vector corner, Vector widthEnd, Vector heightEnd) {
@@ -67,7 +65,7 @@ final class TextDisplaySurfacePool implements AutoCloseable {
         }
         if (surface.getEntityMeta() instanceof AbstractDisplayMeta meta) {
             meta.setScale(new Vector3f(0.0001f, 0.0001f, 0.0001f));
-            meta.setTransformationInterpolationDuration(2);
+            meta.setTransformationInterpolationDuration(0);
             surface.sendPacketToViewers(surface.getEntityMeta().createPacket());
         }
     }

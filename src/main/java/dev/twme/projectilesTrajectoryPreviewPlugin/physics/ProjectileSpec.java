@@ -18,6 +18,7 @@ public record ProjectileSpec(
         Vector initialVelocity,
         Vector offset,
         int handMultiplier,
+        boolean offhand,
         PhysicsOrder order,
         boolean waterCollision,
         boolean canHitEntities
@@ -31,7 +32,7 @@ public record ProjectileSpec(
         double waterDrag = 0.98 * 0.9900000095367432;
         Vector velocity = dropVelocity(player);
         return new ProjectileSpec(gravity, drag, waterDrag, gravity,
-                velocity, new Vector(0.2, -0.06, 0.2), handMultiplier(player, EquipmentSlot.HAND),
+            velocity, new Vector(0.2, -0.06, 0.2), handMultiplier(player, EquipmentSlot.HAND), false,
                 PhysicsOrder.GRAVITY_POSITION_DRAG, true, false);
     }
 
@@ -47,23 +48,25 @@ public record ProjectileSpec(
         Vector offset = new Vector(0.2, -0.06, 0.2);
         int handMultiplier = handMultiplier(player, hand);
 
+        boolean offhand = hand == EquipmentSlot.OFF_HAND;
+
         return switch (type) {
-            case BOW -> bow(player, stack, hand, direction, gravity, drag, waterDrag, offset, handMultiplier);
-            case CROSSBOW -> crossbow(player, stack, direction, gravity, drag, waterDrag, handMultiplier);
-            case TRIDENT -> trident(player, stack, hand, direction, gravity, drag, handMultiplier);
+            case BOW -> bow(player, stack, hand, direction, gravity, drag, waterDrag, offset, handMultiplier, offhand);
+            case CROSSBOW -> crossbow(player, stack, direction, gravity, drag, waterDrag, handMultiplier, offhand);
+            case TRIDENT -> trident(player, stack, hand, direction, gravity, drag, handMultiplier, offhand);
             case SNOWBALL, EGG, ENDER_PEARL -> new ProjectileSpec(0.03, drag, 0.8, 0.03,
-                    direction.multiply(1.5), offset, handMultiplier, PhysicsOrder.GRAVITY_DRAG_POSITION, false, true);
+                direction.multiply(1.5), offset, handMultiplier, offhand, PhysicsOrder.GRAVITY_DRAG_POSITION, false, true);
             case SPLASH_POTION, LINGERING_POTION -> new ProjectileSpec(gravity, drag, 0.8, gravity,
-                    angleFromRot(player.getPitch(), player.getYaw(), -20.0f).multiply(0.5), offset, handMultiplier,
+                angleFromRot(player.getPitch(), player.getYaw(), -20.0f).multiply(0.5), offset, handMultiplier, offhand,
                     PhysicsOrder.GRAVITY_DRAG_POSITION, false, true);
             case EXPERIENCE_BOTTLE -> new ProjectileSpec(0.07, drag, 0.8, 0.07,
-                    angleFromRot(player.getPitch(), player.getYaw(), -20.0f).multiply(0.7), offset, handMultiplier,
+                angleFromRot(player.getPitch(), player.getYaw(), -20.0f).multiply(0.7), offset, handMultiplier, offhand,
                     PhysicsOrder.GRAVITY_DRAG_POSITION, false, true);
             case FISHING_ROD -> new ProjectileSpec(0.03, 0.92, 0.92, 0.03,
-                    fishingHookVelocity(player), new Vector(0.16, -0.06, 0.2), handMultiplier,
+                fishingHookVelocity(player), new Vector(0.16, -0.06, 0.2), handMultiplier, offhand,
                     PhysicsOrder.GRAVITY_POSITION_DRAG, true, true);
             case WIND_CHARGE -> new ProjectileSpec(0.0, 0.95, 0.8, 0.0,
-                    direction, offset, handMultiplier, PhysicsOrder.POSITION_DRAG_GRAVITY, false, true);
+                direction, offset, handMultiplier, offhand, PhysicsOrder.POSITION_DRAG_GRAVITY, false, true);
             default -> null;
         };
     }
@@ -73,28 +76,30 @@ public record ProjectileSpec(
         if (stack == null || stack.getType() != Material.CROSSBOW || !settings.isEnabled(Material.CROSSBOW)) return null;
         if (!stack.containsEnchantment(Enchantment.MULTISHOT)) return null;
         Vector direction = yawOffset(player.getEyeLocation().getDirection().normalize(), yawOffsetDegrees);
-        return crossbow(player, stack, direction, 0.05, 0.99, 0.6, handMultiplier(player, hand));
+        return crossbow(player, stack, direction, 0.05, 0.99, 0.6, handMultiplier(player, hand), hand == EquipmentSlot.OFF_HAND);
     }
 
     private static ProjectileSpec bow(Player player, ItemStack stack, EquipmentSlot hand, Vector direction,
-                                      double gravity, double drag, double waterDrag, Vector offset, int handMultiplier) {
+                          double gravity, double drag, double waterDrag, Vector offset, int handMultiplier,
+                          boolean offhand) {
         float power = bowPower(player, stack, hand);
         if (power < 0.1f) return null;
         return new ProjectileSpec(gravity, drag, waterDrag, gravity,
-                direction.multiply(3.0 * power), offset, handMultiplier, PhysicsOrder.POSITION_DRAG_GRAVITY, false, true);
+            direction.multiply(3.0 * power), offset, handMultiplier, offhand, PhysicsOrder.POSITION_DRAG_GRAVITY, false, true);
     }
 
     private static ProjectileSpec trident(Player player, ItemStack stack, EquipmentSlot hand, Vector direction,
-                                          double gravity, double drag, int handMultiplier) {
+                          double gravity, double drag, int handMultiplier, boolean offhand) {
         if (!isUsing(player, stack, hand) || player.getActiveItemUsedTime() < TRIDENT_THROW_THRESHOLD_TICKS) return null;
         if (stack.containsEnchantment(Enchantment.RIPTIDE)) return null;
         return new ProjectileSpec(gravity, drag, 0.99, gravity,
-                direction.multiply(2.5), new Vector(0.2, 0.1, 0.2), handMultiplier,
+            direction.multiply(2.5), new Vector(0.2, 0.1, 0.2), handMultiplier, offhand,
                 PhysicsOrder.POSITION_DRAG_GRAVITY, false, true);
     }
 
     private static ProjectileSpec crossbow(Player player, ItemStack stack, Vector direction,
-                                           double gravity, double drag, double waterDrag, int handMultiplier) {
+                           double gravity, double drag, double waterDrag, int handMultiplier,
+                           boolean offhand) {
         if (!(stack.getItemMeta() instanceof CrossbowMeta meta) || !meta.hasChargedProjectiles()) return null;
 
         double speed = 3.15;
@@ -110,7 +115,7 @@ public record ProjectileSpec(
         }
 
         return new ProjectileSpec(crossbowGravity, drag, crossbowWaterDrag, crossbowGravity,
-                direction.multiply(speed), new Vector(0.0, -0.06, 0.03), handMultiplier,
+        direction.multiply(speed), new Vector(0.0, -0.06, 0.03), handMultiplier, offhand,
                 PhysicsOrder.POSITION_DRAG_GRAVITY, false, true);
     }
 

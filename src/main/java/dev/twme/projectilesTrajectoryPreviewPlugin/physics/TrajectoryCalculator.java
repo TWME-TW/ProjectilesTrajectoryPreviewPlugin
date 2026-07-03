@@ -55,7 +55,7 @@ public final class TrajectoryCalculator {
             RayTraceResult nearestHit = nearest(previous, blockHit, entityHit);
             if (nearestHit != null && nearestHit.getHitPosition() != null) {
                 points.add(nearestHit.getHitPosition().clone());
-                return new Trajectory(displayPoints(points, handDelta), targetBox(nearestHit), targetKind(nearestHit));
+                return new Trajectory(displayPoints(points, handDelta), targetBox(nearestHit), targetKind(nearestHit), spec.offhand());
             }
 
             if (!spec.waterCollision() && crossesWater(world, previous, segment, length)) {
@@ -69,7 +69,7 @@ public final class TrajectoryCalculator {
             previous = position.clone();
         }
 
-        return new Trajectory(displayPoints(points, handDelta), null, TargetKind.NONE);
+        return new Trajectory(displayPoints(points, handDelta), null, TargetKind.NONE, spec.offhand());
     }
 
     private static void applyStep(PhysicsOrder order, Vector position, Vector velocity, double drag, double gravity) {
@@ -165,6 +165,6 @@ public final class TrajectoryCalculator {
         OTHER_ENTITY
     }
 
-    public record Trajectory(List<Vector> points, BoundingBox targetBox, TargetKind targetKind) {
+    public record Trajectory(List<Vector> points, BoundingBox targetBox, TargetKind targetKind, boolean offhand) {
     }
 }

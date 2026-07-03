@@ -107,7 +107,7 @@ final class PlayerPreview implements AutoCloseable {
             if (settings.trajectoryStyle().segmentScale() < 1.0) {
                 end = start.clone().add(end.clone().subtract(start).multiply(settings.trajectoryStyle().segmentScale()));
             }
-            linePool.update(displayIndex++, start, end, settings.trajectoryColor(trajectory.targetKind()));
+            linePool.update(displayIndex++, start, end, settings.trajectoryColor(trajectory.targetKind()), trajectory.offhand());
         }
         return displayIndex;
     }

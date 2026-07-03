@@ -215,18 +215,20 @@ public final class PreviewSettings {
     }
 
     public enum LineRenderMode {
-        STANDARD(1, new float[] {0.0f}, false),
-        SINGLE_135(1, new float[] {(float) Math.toRadians(135.0)}, false),
-        DOUBLE_SIDED(2, new float[] {0.0f}, true),
-        CROSSED_DOUBLE_SIDED(4, new float[] {(float) Math.toRadians(45.0), (float) Math.toRadians(135.0)}, true);
+        STANDARD(1, new float[] {0.0f}, new float[] {0.0f}, false),
+        SINGLE_135(1, new float[] {(float) Math.toRadians(135.0)}, new float[] {(float) Math.toRadians(45.0)}, false),
+        DOUBLE_SIDED(2, new float[] {0.0f}, new float[] {0.0f}, true),
+        CROSSED_DOUBLE_SIDED(4, new float[] {(float) Math.toRadians(45.0), (float) Math.toRadians(135.0)}, new float[] {(float) Math.toRadians(45.0), (float) Math.toRadians(135.0)}, true);
 
         private final int entitiesPerLogicalLine;
-        private final float[] rolls;
+        private final float[] rightHandRolls;
+        private final float[] leftHandRolls;
         private final boolean doubleSided;
 
-        LineRenderMode(int entitiesPerLogicalLine, float[] rolls, boolean doubleSided) {
+        LineRenderMode(int entitiesPerLogicalLine, float[] rightHandRolls, float[] leftHandRolls, boolean doubleSided) {
             this.entitiesPerLogicalLine = entitiesPerLogicalLine;
-            this.rolls = rolls;
+            this.rightHandRolls = rightHandRolls;
+            this.leftHandRolls = leftHandRolls;
             this.doubleSided = doubleSided;
         }
 
@@ -235,7 +237,11 @@ public final class PreviewSettings {
         }
 
         public float[] rolls() {
-            return rolls;
+            return rightHandRolls;
+        }
+
+        public float[] rolls(boolean offhand) {
+            return offhand ? leftHandRolls : rightHandRolls;
         }
 
         public boolean doubleSided() {
