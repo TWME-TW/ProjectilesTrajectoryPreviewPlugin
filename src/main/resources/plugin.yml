@@ -2,7 +2,7 @@ name: ProjectilesTrajectoryPreviewPlugin
 version: '${version}'
 
 main: dev.twme.projectilesTrajectoryPreviewPlugin.ProjectilesTrajectoryPreviewPlugin
-api-version: '1.21.11'
+api-version: '1.13'
 load: POSTWORLD
 depend:
   - packetevents
