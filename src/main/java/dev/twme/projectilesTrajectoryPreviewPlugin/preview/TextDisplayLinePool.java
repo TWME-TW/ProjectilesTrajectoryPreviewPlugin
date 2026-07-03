@@ -25,13 +25,15 @@ final class TextDisplayLinePool implements AutoCloseable {
     private final Player viewer;
     private final float thickness;
     private final PreviewSettings.LineRenderMode renderMode;
+    private final int transformationInterpolationTicks;
     private final List<LineShape> lines;
     private Location origin;
 
-    TextDisplayLinePool(Player viewer, int size, float thickness, PreviewSettings.LineRenderMode renderMode) {
+    TextDisplayLinePool(Player viewer, int size, float thickness, PreviewSettings.LineRenderMode renderMode, int transformationInterpolationTicks) {
         this.viewer = viewer;
         this.thickness = thickness;
         this.renderMode = renderMode;
+        this.transformationInterpolationTicks = transformationInterpolationTicks;
         this.origin = normalizedOrigin(viewer.getLocation());
         this.lines = new ArrayList<>(size);
 
@@ -51,8 +53,8 @@ final class TextDisplayLinePool implements AutoCloseable {
         for (int rollIndex = 0; rollIndex < rolls.length; rollIndex++) {
             float roll = rolls[rollIndex];
             LinePair pair = shape.pairs().get(rollIndex);
-            apply(pair.front(), lineMatrix(start, end, roll), argbColor, 0);
-            if (pair.back() != null) apply(pair.back(), lineMatrix(end, start, -roll), argbColor, 0);
+            apply(pair.front(), lineMatrix(start, end, roll), argbColor);
+            if (pair.back() != null) apply(pair.back(), lineMatrix(end, start, -roll), argbColor);
         }
     }
 
@@ -99,7 +101,7 @@ final class TextDisplayLinePool implements AutoCloseable {
         }
         if (line.getEntityMeta() instanceof AbstractDisplayMeta meta) {
             meta.setScale(new Vector3f(0.0001f, 0.0001f, 0.0001f));
-            meta.setTransformationInterpolationDuration(0);
+            meta.setTransformationInterpolationDuration(transformationInterpolationTicks);
             line.sendPacketToViewers(line.getEntityMeta().createPacket());
         }
     }
@@ -116,7 +118,7 @@ final class TextDisplayLinePool implements AutoCloseable {
             meta.setBrightnessOverride(15 << 4 | 15 << 20);
             meta.setViewRange(VIEW_RANGE);
             meta.setInterpolationDelay(0);
-            meta.setTransformationInterpolationDuration(0);
+            meta.setTransformationInterpolationDuration(transformationInterpolationTicks);
             meta.setPositionRotationInterpolationDuration(0);
             meta.setScale(new Vector3f(0.0001f, 0.0001f, 0.0001f));
         }
@@ -145,7 +147,7 @@ final class TextDisplayLinePool implements AutoCloseable {
         }
     }
 
-    private void apply(WrapperEntity entity, Matrix4f matrix, int argbColor, int interpolationTicks) {
+    private void apply(WrapperEntity entity, Matrix4f matrix, int argbColor) {
         if (entity.getEntityMeta() instanceof TextDisplayMeta textMeta) {
             textMeta.setBackgroundColor(argbColor);
         }
@@ -159,7 +161,7 @@ final class TextDisplayLinePool implements AutoCloseable {
         matrix.getUnnormalizedRotation(rotation);
 
         meta.setInterpolationDelay(0);
-        meta.setTransformationInterpolationDuration(interpolationTicks);
+        meta.setTransformationInterpolationDuration(transformationInterpolationTicks);
         meta.setPositionRotationInterpolationDuration(0);
         meta.setTranslation(new Vector3f(translation.x, translation.y, translation.z));
         meta.setScale(new Vector3f(scale.x, scale.y, scale.z));

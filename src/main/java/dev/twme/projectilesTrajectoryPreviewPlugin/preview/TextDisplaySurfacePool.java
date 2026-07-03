@@ -22,15 +22,25 @@ final class TextDisplaySurfacePool implements AutoCloseable {
     private static final float VIEW_RANGE = 100.0f;
 
     private final Player viewer;
+    private final int transformationInterpolationTicks;
     private final List<SurfacePair> surfaces;
     private Location origin;
 
     TextDisplaySurfacePool(Player viewer, int size) {
-        this(viewer, size, false);
+        this(viewer, size, false, 0);
+    }
+
+    TextDisplaySurfacePool(Player viewer, int size, int transformationInterpolationTicks) {
+        this(viewer, size, false, transformationInterpolationTicks);
     }
 
     TextDisplaySurfacePool(Player viewer, int size, boolean doubleSided) {
+        this(viewer, size, doubleSided, 0);
+    }
+
+    TextDisplaySurfacePool(Player viewer, int size, boolean doubleSided, int transformationInterpolationTicks) {
         this.viewer = viewer;
+        this.transformationInterpolationTicks = transformationInterpolationTicks;
         this.origin = normalizedOrigin(viewer.getLocation());
         this.surfaces = new ArrayList<>(size);
 
@@ -42,8 +52,8 @@ final class TextDisplaySurfacePool implements AutoCloseable {
     void update(int index, Vector corner, Vector widthEnd, Vector heightEnd, int argbColor) {
         ensureOrigin();
         SurfacePair surface = surfaces.get(index);
-        apply(surface.front(), surfaceMatrix(corner, widthEnd, heightEnd), argbColor, 0);
-        if (surface.back() != null) apply(surface.back(), surfaceMatrix(corner, heightEnd, widthEnd), argbColor, 0);
+        apply(surface.front(), surfaceMatrix(corner, widthEnd, heightEnd), argbColor);
+        if (surface.back() != null) apply(surface.back(), surfaceMatrix(corner, heightEnd, widthEnd), argbColor);
     }
 
     private Matrix4f surfaceMatrix(Vector corner, Vector widthEnd, Vector heightEnd) {
@@ -65,7 +75,7 @@ final class TextDisplaySurfacePool implements AutoCloseable {
         }
         if (surface.getEntityMeta() instanceof AbstractDisplayMeta meta) {
             meta.setScale(new Vector3f(0.0001f, 0.0001f, 0.0001f));
-            meta.setTransformationInterpolationDuration(0);
+            meta.setTransformationInterpolationDuration(transformationInterpolationTicks);
             surface.sendPacketToViewers(surface.getEntityMeta().createPacket());
         }
     }
@@ -91,7 +101,7 @@ final class TextDisplaySurfacePool implements AutoCloseable {
             meta.setBrightnessOverride(15 << 4 | 15 << 20);
             meta.setViewRange(VIEW_RANGE);
             meta.setInterpolationDelay(0);
-            meta.setTransformationInterpolationDuration(0);
+            meta.setTransformationInterpolationDuration(transformationInterpolationTicks);
             meta.setPositionRotationInterpolationDuration(0);
             meta.setScale(new Vector3f(0.0001f, 0.0001f, 0.0001f));
         }
@@ -118,7 +128,7 @@ final class TextDisplaySurfacePool implements AutoCloseable {
         }
     }
 
-    private void apply(WrapperEntity entity, Matrix4f matrix, int argbColor, int interpolationTicks) {
+    private void apply(WrapperEntity entity, Matrix4f matrix, int argbColor) {
         if (entity.getEntityMeta() instanceof TextDisplayMeta textMeta) {
             textMeta.setBackgroundColor(argbColor);
         }
@@ -132,7 +142,7 @@ final class TextDisplaySurfacePool implements AutoCloseable {
         matrix.getUnnormalizedRotation(rotation);
 
         meta.setInterpolationDelay(0);
-        meta.setTransformationInterpolationDuration(interpolationTicks);
+        meta.setTransformationInterpolationDuration(transformationInterpolationTicks);
         meta.setPositionRotationInterpolationDuration(0);
         meta.setTranslation(new Vector3f(translation.x, translation.y, translation.z));
         meta.setScale(new Vector3f(scale.x, scale.y, scale.z));

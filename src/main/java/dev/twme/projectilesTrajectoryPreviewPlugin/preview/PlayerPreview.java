@@ -25,10 +25,10 @@ final class PlayerPreview implements AutoCloseable {
     PlayerPreview(Player player, PreviewSettings settings) {
         this.settings = settings;
         this.trajectoryLineCount = effectiveTrajectoryLineCount(settings);
-        this.linePool = new TextDisplayLinePool(player, trajectoryLineCount, settings.lineThickness(), settings.lineRenderMode());
-        this.outlinePool = new TextDisplayLinePool(player, OUTLINE_LINE_COUNT, settings.lineThickness(), settings.lineRenderMode());
-        this.highlightPool = new TextDisplaySurfacePool(player, HIGHLIGHT_FACE_COUNT);
-        this.uncertaintyPool = new TextDisplaySurfacePool(player, UNCERTAINTY_FACE_COUNT, true);
+        this.linePool = new TextDisplayLinePool(player, trajectoryLineCount, settings.lineThickness(), settings.lineRenderMode(), settings.transformationInterpolationTicks());
+        this.outlinePool = new TextDisplayLinePool(player, OUTLINE_LINE_COUNT, settings.lineThickness(), settings.lineRenderMode(), settings.transformationInterpolationTicks());
+        this.highlightPool = new TextDisplaySurfacePool(player, HIGHLIGHT_FACE_COUNT, settings.transformationInterpolationTicks());
+        this.uncertaintyPool = new TextDisplaySurfacePool(player, UNCERTAINTY_FACE_COUNT, true, settings.transformationInterpolationTicks());
     }
 
     private static int effectiveTrajectoryLineCount(PreviewSettings settings) {

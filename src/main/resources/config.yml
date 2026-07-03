@@ -11,6 +11,7 @@ fallback-update-ticks: 0
 line-count: 48
 line-thickness: 0.025
 line-render-mode: single-135
+transformation-interpolation-ticks: 0
 line-entity-budget: 128
 trajectory-style: solid
 trajectory-color: depends-on-target

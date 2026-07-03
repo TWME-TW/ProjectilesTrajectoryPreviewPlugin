@@ -36,7 +36,7 @@ public final class PtpCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage("Offhand: " + settings.enableOffhand() + ", drop preview: " + settings.showDropPreview());
             sender.sendMessage("Requested lines: " + settings.lineCount() + ", thickness: " + settings.lineThickness() + ", mode: " + settings.lineRenderMode() + ", style: " + settings.trajectoryStyle());
             sender.sendMessage("Line entity budget: " + settings.lineEntityBudget() + ", entities per line: " + settings.lineRenderMode().entitiesPerLogicalLine());
-            sender.sendMessage("Update interval: " + (settings.updateIntervalNanos() / 1_000_000L) + "ms, fallback ticks: " + settings.fallbackUpdateTicks());
+            sender.sendMessage("Update interval: " + (settings.updateIntervalNanos() / 1_000_000L) + "ms, fallback ticks: " + settings.fallbackUpdateTicks() + ", interpolation ticks: " + settings.transformationInterpolationTicks());
             return true;
         }
 
