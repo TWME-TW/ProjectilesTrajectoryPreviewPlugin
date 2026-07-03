@@ -1,16 +1,84 @@
 package dev.twme.projectilesTrajectoryPreviewPlugin;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.event.PacketListenerCommon;
+import com.github.retrooper.packetevents.event.PacketListenerPriority;
+import dev.twme.projectilesTrajectoryPreviewPlugin.command.PtpCommand;
+import dev.twme.projectilesTrajectoryPreviewPlugin.config.PreviewSettings;
+import dev.twme.projectilesTrajectoryPreviewPlugin.listener.PlayerLookPacketListener;
+import dev.twme.projectilesTrajectoryPreviewPlugin.preview.TrajectoryPreviewManager;
+import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
+import me.tofaa.entitylib.APIConfig;
+import me.tofaa.entitylib.EntityLib;
+import me.tofaa.entitylib.spigot.SpigotEntityLibPlatform;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class ProjectilesTrajectoryPreviewPlugin extends JavaPlugin {
 
+    private TrajectoryPreviewManager previewManager;
+    private PlayerLookPacketListener packetListener;
+    private PacketListenerCommon registeredPacketListener;
+    private PreviewSettings previewSettings;
+
+    @Override
+    public void onLoad() {
+        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
+        PacketEvents.getAPI().getSettings()
+                .debug(false)
+                .checkForUpdates(false);
+        PacketEvents.getAPI().load();
+    }
+
     @Override
     public void onEnable() {
-        // Plugin startup logic
+        saveDefaultConfig();
+        reloadPreviewSettings();
+
+        PacketEvents.getAPI().init();
+
+        SpigotEntityLibPlatform platform = new SpigotEntityLibPlatform(this);
+        APIConfig settings = new APIConfig(PacketEvents.getAPI()).usePlatformLogger();
+        EntityLib.init(platform, settings);
+
+        previewManager = new TrajectoryPreviewManager(this);
+        packetListener = new PlayerLookPacketListener(previewManager);
+        registeredPacketListener = PacketEvents.getAPI().getEventManager()
+                .registerListener(packetListener, PacketListenerPriority.NORMAL);
+
+        PtpCommand command = new PtpCommand(this);
+        PluginCommand pluginCommand = getCommand("ptp");
+        if (pluginCommand != null) {
+            pluginCommand.setExecutor(command);
+            pluginCommand.setTabCompleter(command);
+        }
     }
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
+        if (packetListener != null) {
+            packetListener.deactivate();
+        }
+        if (registeredPacketListener != null) {
+            PacketEvents.getAPI().getEventManager().unregisterListener(registeredPacketListener);
+            registeredPacketListener = null;
+        }
+        if (previewManager != null) {
+            previewManager.close();
+            previewManager = null;
+        }
+        PacketEvents.getAPI().terminate();
+    }
+
+    public PreviewSettings previewSettings() {
+        return previewSettings;
+    }
+
+    public void reloadPreviewSettings() {
+        previewSettings = PreviewSettings.load(getConfig());
+        if (previewManager != null) {
+            previewManager.clearAll();
+            previewManager.rescheduleFallbackUpdate();
+        }
     }
 }

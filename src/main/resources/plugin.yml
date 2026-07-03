@@ -4,5 +4,18 @@ version: '${version}'
 main: dev.twme.projectilesTrajectoryPreviewPlugin.ProjectilesTrajectoryPreviewPlugin
 api-version: '1.21.11'
 load: POSTWORLD
+depend:
+  - packetevents
 
 authors: [ TWME-TW ]
+
+commands:
+  ptp:
+    description: Manage projectile trajectory previews
+    usage: /ptp <toggle|reload|status>
+    permission: ptp.use
+
+permissions:
+  ptp.use:
+    description: Allow using projectile trajectory preview commands
+    default: true

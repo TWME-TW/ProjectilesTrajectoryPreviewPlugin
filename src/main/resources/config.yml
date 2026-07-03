@@ -1,0 +1,38 @@
+enabled: true
+enable-offhand: false
+show-trajectory: enabled
+show-outline: enabled
+show-highlight: enabled
+show-uncertainty: disabled
+show-drop-preview: true
+drop-preview-duration-ms: 450
+update-interval-ms: 50
+fallback-update-ticks: 0
+line-count: 48
+line-thickness: 0.025
+line-render-mode: single-135
+line-entity-budget: 128
+trajectory-style: solid
+trajectory-color: depends-on-target
+trajectory-alpha: 210
+outline-color: '#FFEB50'
+outline-alpha: 190
+highlight-color: '#FFEB50'
+highlight-alpha: 55
+uncertainty-color: '#F2F7FF'
+uncertainty-alpha: 42
+uncertainty-base-radius: 0.08
+uncertainty-spread-per-block: 0.01725
+uncertainty-max-radius: 1.25
+
+projectiles:
+  bow: true
+  crossbow: true
+  trident: true
+  ender-pearl: true
+  snowball: true
+  egg: true
+  wind-charge: true
+  potion: true
+  experience-bottle: true
+  fishing-rod: true
