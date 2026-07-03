@@ -2,7 +2,7 @@
 
 Paper plugin port of [ProjectilesTrajectoryPreview](https://github.com/maDU59/ProjectilesTrajectoryPreview). It renders projectile paths, impact outlines, and impact fills for players on the server without requiring a client mod.
 
-This plugin uses packet-only TextDisplay entities for rendering. Trajectory updates are driven by PacketEvents player movement/look packets, so preview motion is not limited to Bukkit's normal 20 TPS scheduler cadence.
+This plugin uses packet-only TextDisplay entities for rendering. PacketEvents detects player movement/look packets without polling, while trajectory calculation and TextDisplay updates remain safely synchronized with the server main thread.
 
 ## Demo
 
@@ -203,7 +203,7 @@ Because the server cannot know every client-only state, there are a few intentio
 
 ## Credits
 
-This plugin is a Paper/Spigot port inspired by and partially adapted from the original Fabric client mod [ProjectilesTrajectoryPreview](https://github.com/maDU59/ProjectilesTrajectoryPreview) by maDU59.
+This plugin is a Paper port inspired by and partially adapted from the original Fabric client mod [ProjectilesTrajectoryPreview](https://github.com/maDU59/ProjectilesTrajectoryPreview) by maDU59.
 
 The projectile physics parameters, trajectory simulation structure, and several parity decisions were implemented with reference to the original mod's MIT-licensed source code.
 
