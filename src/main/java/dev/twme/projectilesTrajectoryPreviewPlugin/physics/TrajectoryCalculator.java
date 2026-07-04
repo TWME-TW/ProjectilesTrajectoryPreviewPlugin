@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Ageable;
 import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Entity;
@@ -30,7 +31,7 @@ public final class TrajectoryCalculator {
         Vector eye = player.getEyeLocation().toVector();
         Vector position = eye.clone().add(new Vector(0, -0.10000000149011612, 0));
         Vector handDelta = handDelta(player, eye, position, spec);
-        Vector velocity = spec.initialVelocity().clone().add(player.getVelocity());
+        Vector velocity = spec.initialVelocity().clone().add(relativePlayerVelocity(player));
         Vector previous = position.clone();
         double gravity = spec.gravity();
         double drag = spec.drag();
@@ -108,6 +109,44 @@ public final class TrajectoryCalculator {
         if (hit.getHitBlock() != null) return hit.getHitBlock().getBoundingBox();
         if (hit.getHitEntity() != null) return hit.getHitEntity().getBoundingBox();
         return null;
+    }
+
+    private static Vector relativePlayerVelocity(Player player) {
+        Vector velocity = player.getVelocity();
+        return new Vector(velocity.getX(), isSupportedByBlock(player) ? 0.0 : velocity.getY(), velocity.getZ());
+    }
+
+    private static boolean isSupportedByBlock(Player player) {
+        BoundingBox playerBox = player.getBoundingBox();
+        BoundingBox supportBox = new BoundingBox(
+                playerBox.getMinX() + 1.0E-4,
+                playerBox.getMinY() - 0.05,
+                playerBox.getMinZ() + 1.0E-4,
+                playerBox.getMaxX() - 1.0E-4,
+                playerBox.getMinY() + 0.01,
+                playerBox.getMaxZ() - 1.0E-4);
+
+        World world = player.getWorld();
+        int minX = floor(supportBox.getMinX());
+        int maxX = floor(supportBox.getMaxX());
+        int minY = floor(supportBox.getMinY());
+        int maxY = floor(supportBox.getMaxY());
+        int minZ = floor(supportBox.getMinZ());
+        int maxZ = floor(supportBox.getMaxZ());
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    Block block = world.getBlockAt(x, y, z);
+                    if (!block.isPassable() && block.getBoundingBox().overlaps(supportBox)) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static int floor(double value) {
+        return (int) Math.floor(value);
     }
 
     private static TargetKind targetKind(RayTraceResult hit) {
