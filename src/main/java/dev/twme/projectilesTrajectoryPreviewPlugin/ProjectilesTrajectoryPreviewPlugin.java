@@ -3,6 +3,8 @@ package dev.twme.projectilesTrajectoryPreviewPlugin;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerCommon;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
+import dev.twme.projectilesTrajectoryPreviewPlugin.api.ProjectilesTrajectoryPreviewApi;
+import dev.twme.projectilesTrajectoryPreviewPlugin.api.ProjectilesTrajectoryPreviewApiProvider;
 import dev.twme.projectilesTrajectoryPreviewPlugin.command.PtpCommand;
 import dev.twme.projectilesTrajectoryPreviewPlugin.config.PreviewSettings;
 import dev.twme.projectilesTrajectoryPreviewPlugin.listener.PlayerLookPacketListener;
@@ -11,6 +13,7 @@ import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder
 import me.tofaa.entitylib.APIConfig;
 import me.tofaa.entitylib.EntityLib;
 import me.tofaa.entitylib.spigot.SpigotEntityLibPlatform;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -20,6 +23,7 @@ public final class ProjectilesTrajectoryPreviewPlugin extends JavaPlugin {
     private PlayerLookPacketListener packetListener;
     private PacketListenerCommon registeredPacketListener;
     private PreviewSettings previewSettings;
+    private ProjectilesTrajectoryPreviewApi api;
 
     @Override
     public void onLoad() {
@@ -42,6 +46,9 @@ public final class ProjectilesTrajectoryPreviewPlugin extends JavaPlugin {
         EntityLib.init(platform, settings);
 
         previewManager = new TrajectoryPreviewManager(this);
+        api = new ProjectilesTrajectoryPreviewApiProvider(this);
+        getServer().getServicesManager().register(ProjectilesTrajectoryPreviewApi.class, api, this, ServicePriority.Normal);
+
         packetListener = new PlayerLookPacketListener(previewManager);
         registeredPacketListener = PacketEvents.getAPI().getEventManager()
                 .registerListener(packetListener, PacketListenerPriority.NORMAL);
@@ -56,6 +63,8 @@ public final class ProjectilesTrajectoryPreviewPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        getServer().getServicesManager().unregisterAll(this);
+        api = null;
         if (packetListener != null) {
             packetListener.deactivate();
         }
@@ -72,6 +81,14 @@ public final class ProjectilesTrajectoryPreviewPlugin extends JavaPlugin {
 
     public PreviewSettings previewSettings() {
         return previewSettings;
+    }
+
+    public TrajectoryPreviewManager previewManager() {
+        return previewManager;
+    }
+
+    public ProjectilesTrajectoryPreviewApi api() {
+        return api;
     }
 
     public void reloadPreviewSettings() {

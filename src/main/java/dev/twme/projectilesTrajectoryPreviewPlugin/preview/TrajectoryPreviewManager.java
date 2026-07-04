@@ -77,6 +77,10 @@ public final class TrajectoryPreviewManager implements AutoCloseable {
         });
     }
 
+    public void forceUpdate(Player player) {
+        updateOnMainThread(player, true);
+    }
+
     private void scheduleDropPreviewClear(Player player, PreviewSettings settings) {
         UUID playerId = player.getUniqueId();
         BukkitTask existingTask = dropPreviewClearTasks.remove(playerId);
@@ -188,6 +192,12 @@ public final class TrajectoryPreviewManager implements AutoCloseable {
 
     public void clearAll() {
         previews.values().forEach(PlayerPreview::clear);
+    }
+
+    public void clear(Player player) {
+        if (player == null) return;
+        PlayerPreview preview = previews.get(player.getUniqueId());
+        if (preview != null) preview.clear();
     }
 
     @Override

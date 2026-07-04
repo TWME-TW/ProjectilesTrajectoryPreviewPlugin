@@ -61,6 +61,39 @@ target/projectilestrajectorypreviewplugin-1.0.0.jar
 | `/ptp toggle` | `ptp.use` | Toggle the global `enabled` setting and save config. |
 | `/ptp reload` | `ptp.use` | Reload `config.yml` and clear active previews. |
 
+## API
+
+Other plugins can access `ProjectilesTrajectoryPreviewApi` through Bukkit's `ServicesManager`.
+
+Add this plugin as a dependency or soft dependency in your plugin.yml:
+
+```yaml
+softdepend:
+  - ProjectilesTrajectoryPreviewPlugin
+```
+
+Then request the service after both plugins are enabled:
+
+```java
+RegisteredServiceProvider<ProjectilesTrajectoryPreviewApi> provider = Bukkit.getServicesManager()
+        .getRegistration(ProjectilesTrajectoryPreviewApi.class);
+if (provider == null) return;
+
+ProjectilesTrajectoryPreviewApi api = provider.getProvider();
+api.refresh(player);
+api.showDropPreview(player);
+api.clear(player);
+```
+
+Available API methods:
+
+- `isEnabled()` - read the global preview toggle.
+- `refresh(Player)` - force a preview recalculation for a player.
+- `showDropPreview(Player)` - show the temporary dropped-item trajectory preview.
+- `clear(Player)` - hide a player's active preview displays.
+- `clearAll()` - hide all active preview displays.
+- `reload()` - reload this plugin's config and preview settings.
+
 ## Configuration
 
 Default config:
