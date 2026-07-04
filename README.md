@@ -29,6 +29,7 @@ This plugin uses packet-only TextDisplay entities for rendering. PacketEvents de
 
 - Java 21
 - Paper `1.21.11`
+- Folia is supported.
 - PacketEvents installed as a server plugin
 
 `PacketEvents` is declared as a plugin dependency. EntityLib and TextDisplayShapes API are shaded into this plugin jar.
@@ -217,6 +218,8 @@ Opacity is controlled separately by the matching `*-alpha` value from `0` to `25
 ## Server-side notes
 
 This is a server plugin, not a client mod. Players do not need to install anything client-side.
+
+The plugin is marked `folia-supported: true` and uses Paper/Folia global and entity schedulers instead of Bukkit's main-thread scheduler.
 
 Because the server cannot know every client-only state, there are a few intentional differences from the Fabric client mod:
 

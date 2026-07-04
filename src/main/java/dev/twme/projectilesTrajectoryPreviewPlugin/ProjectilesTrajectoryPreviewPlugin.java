@@ -9,6 +9,7 @@ import dev.twme.projectilesTrajectoryPreviewPlugin.command.PtpCommand;
 import dev.twme.projectilesTrajectoryPreviewPlugin.config.PreviewSettings;
 import dev.twme.projectilesTrajectoryPreviewPlugin.listener.PlayerLookPacketListener;
 import dev.twme.projectilesTrajectoryPreviewPlugin.preview.TrajectoryPreviewManager;
+import dev.twme.projectilesTrajectoryPreviewPlugin.scheduler.PreviewScheduler;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import me.tofaa.entitylib.APIConfig;
 import me.tofaa.entitylib.EntityLib;
@@ -24,6 +25,7 @@ public final class ProjectilesTrajectoryPreviewPlugin extends JavaPlugin {
     private PacketListenerCommon registeredPacketListener;
     private PreviewSettings previewSettings;
     private ProjectilesTrajectoryPreviewApi api;
+    private PreviewScheduler previewScheduler;
 
     @Override
     public void onLoad() {
@@ -45,6 +47,7 @@ public final class ProjectilesTrajectoryPreviewPlugin extends JavaPlugin {
         APIConfig settings = new APIConfig(PacketEvents.getAPI()).usePlatformLogger();
         EntityLib.init(platform, settings);
 
+        previewScheduler = new PreviewScheduler(this);
         previewManager = new TrajectoryPreviewManager(this);
         api = new ProjectilesTrajectoryPreviewApiProvider(this);
         getServer().getServicesManager().register(ProjectilesTrajectoryPreviewApi.class, api, this, ServicePriority.Normal);
@@ -76,6 +79,7 @@ public final class ProjectilesTrajectoryPreviewPlugin extends JavaPlugin {
             previewManager.close();
             previewManager = null;
         }
+        previewScheduler = null;
         PacketEvents.getAPI().terminate();
     }
 
@@ -85,6 +89,10 @@ public final class ProjectilesTrajectoryPreviewPlugin extends JavaPlugin {
 
     public TrajectoryPreviewManager previewManager() {
         return previewManager;
+    }
+
+    public PreviewScheduler previewScheduler() {
+        return previewScheduler;
     }
 
     public ProjectilesTrajectoryPreviewApi api() {

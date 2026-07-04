@@ -4,8 +4,8 @@ import dev.twme.projectilesTrajectoryPreviewPlugin.ProjectilesTrajectoryPreviewP
 import dev.twme.projectilesTrajectoryPreviewPlugin.config.PreviewSettings;
 import dev.twme.projectilesTrajectoryPreviewPlugin.physics.ProjectileSpec;
 import dev.twme.projectilesTrajectoryPreviewPlugin.physics.TrajectoryCalculator;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -15,43 +15,42 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitTask;
 
 public final class TrajectoryPreviewManager implements AutoCloseable {
 
     private final ProjectilesTrajectoryPreviewPlugin plugin;
     private final TrajectoryCalculator calculator = new TrajectoryCalculator();
-    private final Map<UUID, PlayerPreview> previews = new HashMap<>();
-    private final Map<UUID, Long> dropPreviewExpiresAt = new HashMap<>();
-    private final Map<UUID, BukkitTask> dropPreviewClearTasks = new HashMap<>();
+    private final Map<UUID, PlayerPreview> previews = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> dropPreviewExpiresAt = new ConcurrentHashMap<>();
+    private final Map<UUID, ScheduledTask> dropPreviewClearTasks = new ConcurrentHashMap<>();
     private final Map<UUID, Long> nextPacketUpdateAt = new ConcurrentHashMap<>();
     private final Map<UUID, Boolean> pendingPacketUpdates = new ConcurrentHashMap<>();
-    private final BukkitTask cleanupTask;
-    private BukkitTask fallbackUpdateTask;
+    private final ScheduledTask cleanupTask;
+    private ScheduledTask fallbackUpdateTask;
 
     public TrajectoryPreviewManager(ProjectilesTrajectoryPreviewPlugin plugin) {
         this.plugin = plugin;
-        this.cleanupTask = Bukkit.getScheduler().runTaskTimer(plugin, this::cleanupOfflinePlayers, 20L, 20L);
+        this.cleanupTask = plugin.previewScheduler().runGlobalTimer(this::cleanupOfflinePlayers, 20L, 20L);
         rescheduleFallbackUpdate();
     }
 
     public void rescheduleFallbackUpdate() {
-        if (fallbackUpdateTask != null) fallbackUpdateTask.cancel();
+        plugin.previewScheduler().cancel(fallbackUpdateTask);
         fallbackUpdateTask = null;
         long periodTicks = plugin.previewSettings().fallbackUpdateTicks();
         if (periodTicks <= 0L) return;
-        fallbackUpdateTask = Bukkit.getScheduler().runTaskTimer(plugin, this::fallbackUpdateOnlinePlayers, periodTicks, periodTicks);
+        fallbackUpdateTask = plugin.previewScheduler().runGlobalTimer(this::fallbackUpdateOnlinePlayers, periodTicks, periodTicks);
     }
 
     private void fallbackUpdateOnlinePlayers() {
         PreviewSettings settings = plugin.previewSettings();
         if (!settings.enabled()) {
-            previews.values().forEach(PlayerPreview::clear);
+            clearAll();
             return;
         }
 
         for (Player player : Bukkit.getOnlinePlayers()) {
-            updateOnMainThread(player, false);
+            forceUpdate(player);
         }
     }
 
@@ -63,48 +62,48 @@ public final class TrajectoryPreviewManager implements AutoCloseable {
         if (now < nextAllowed) return;
         nextPacketUpdateAt.put(playerId, now + plugin.previewSettings().updateIntervalNanos());
         if (pendingPacketUpdates.putIfAbsent(playerId, Boolean.TRUE) != null) return;
-        Bukkit.getScheduler().runTask(plugin, () -> updateOnMainThread(player));
+        plugin.previewScheduler().runEntity(player, () -> updateOnRegion(player));
     }
 
     public void previewDrop(Player player) {
-        Bukkit.getScheduler().runTask(plugin, () -> {
+        plugin.previewScheduler().runEntity(player, () -> {
             PreviewSettings settings = plugin.previewSettings();
             if (!settings.enabled() || !settings.showDropPreview()) return;
             UUID playerId = player.getUniqueId();
             dropPreviewExpiresAt.put(playerId, System.nanoTime() + settings.dropPreviewDurationNanos());
             scheduleDropPreviewClear(player, settings);
-            updateOnMainThread(player, true);
+            updateOnRegion(player, true);
         });
     }
 
     public void forceUpdate(Player player) {
-        updateOnMainThread(player, true);
+        plugin.previewScheduler().runEntity(player, () -> updateOnRegion(player, true));
     }
 
     private void scheduleDropPreviewClear(Player player, PreviewSettings settings) {
         UUID playerId = player.getUniqueId();
-        BukkitTask existingTask = dropPreviewClearTasks.remove(playerId);
-        if (existingTask != null) existingTask.cancel();
+        ScheduledTask existingTask = dropPreviewClearTasks.remove(playerId);
+        plugin.previewScheduler().cancel(existingTask);
 
         long delayTicks = Math.max(1L, (long) Math.ceil(settings.dropPreviewDurationNanos() / 50_000_000.0));
-        BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        ScheduledTask task = plugin.previewScheduler().runEntityLater(player, () -> {
             dropPreviewClearTasks.remove(playerId);
             Long dropUntil = dropPreviewExpiresAt.get(playerId);
             if (dropUntil != null && dropUntil > System.nanoTime()) return;
             dropPreviewExpiresAt.remove(playerId);
 
             Player onlinePlayer = Bukkit.getPlayer(playerId);
-            if (onlinePlayer != null) updateOnMainThread(onlinePlayer, true);
+            if (onlinePlayer != null) updateOnRegion(onlinePlayer, true);
             else remove(playerId);
         }, delayTicks);
-        dropPreviewClearTasks.put(playerId, task);
+        if (task != null) dropPreviewClearTasks.put(playerId, task);
     }
 
-    private void updateOnMainThread(Player player) {
-        updateOnMainThread(player, false);
+    private void updateOnRegion(Player player) {
+        updateOnRegion(player, false);
     }
 
-    private void updateOnMainThread(Player player, boolean force) {
+    private void updateOnRegion(Player player, boolean force) {
         pendingPacketUpdates.remove(player.getUniqueId());
         if (!player.isOnline() || player.isDead()) {
             remove(player.getUniqueId());
@@ -186,28 +185,33 @@ public final class TrajectoryPreviewManager implements AutoCloseable {
 
     private void clearDropPreviewState(UUID playerId) {
         dropPreviewExpiresAt.remove(playerId);
-        BukkitTask task = dropPreviewClearTasks.remove(playerId);
-        if (task != null) task.cancel();
+        ScheduledTask task = dropPreviewClearTasks.remove(playerId);
+        plugin.previewScheduler().cancel(task);
     }
 
     public void clearAll() {
-        previews.values().forEach(PlayerPreview::clear);
+        for (UUID playerId : previews.keySet()) {
+            Player player = Bukkit.getPlayer(playerId);
+            if (player != null) clear(player);
+        }
     }
 
     public void clear(Player player) {
         if (player == null) return;
-        PlayerPreview preview = previews.get(player.getUniqueId());
-        if (preview != null) preview.clear();
+        plugin.previewScheduler().runEntity(player, () -> {
+            PlayerPreview preview = previews.get(player.getUniqueId());
+            if (preview != null) preview.clear();
+        });
     }
 
     @Override
     public void close() {
-        cleanupTask.cancel();
-        if (fallbackUpdateTask != null) fallbackUpdateTask.cancel();
+        plugin.previewScheduler().cancel(cleanupTask);
+        plugin.previewScheduler().cancel(fallbackUpdateTask);
         dropPreviewExpiresAt.clear();
         nextPacketUpdateAt.clear();
         pendingPacketUpdates.clear();
-        dropPreviewClearTasks.values().forEach(BukkitTask::cancel);
+        dropPreviewClearTasks.values().forEach(plugin.previewScheduler()::cancel);
         dropPreviewClearTasks.clear();
         previews.values().forEach(PlayerPreview::close);
         previews.clear();

@@ -4,6 +4,7 @@ version: '${version}'
 main: dev.twme.projectilesTrajectoryPreviewPlugin.ProjectilesTrajectoryPreviewPlugin
 api-version: '1.13'
 load: POSTWORLD
+folia-supported: true
 depend:
   - packetevents
 
